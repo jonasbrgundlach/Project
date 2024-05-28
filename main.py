@@ -2,6 +2,7 @@
 
 import argparse
 from attacks import arp_poison
+from utils import network_utils
 
 def main():
     parser = argparse.ArgumentParser(description="Multi-attack Program")
@@ -19,14 +20,26 @@ def main():
     # Another attack arguments
     another_attack_parser = subparsers.add_parser("another_attack", help="Perform another type of attack")
     another_attack_parser.add_argument("--example-param", required=True, help="Example parameter for another attack")
+    
+    # Get MAC address arguments
+    mac_parser = subparsers.add_parser("get_mac", help="Get the MAC address of a machine using its IP address")
+    mac_parser.add_argument("--ip", required=True, help="IP address of the machine to find the MAC address for")
+    mac_parser.add_argument("--network-range", required=True, help="The range of IP addresses to scan, e.g., '192.168.56.0-255'")
 
+    # Parse the arguments
     args = parser.parse_args()
     
     # Check which attack to perform
     if args.attack == "arp_poison":
         arp_poison.run(args)
     elif args.attack == "another_attack":
-        print("Performing another attack with parameter: %s" % args.example_param)
+        another_attack.run(args)
+    elif args.attack == "get_mac":
+        mac_address = network_utils(args.ip, args.network_range)
+        if mac_address:
+            print("The MAC address for IP {} is {}".format(args.ip, mac_address))
+        else:
+            print("No MAC address found for IP {}".format(args.ip))
     else:
         parser.print_help()
 
