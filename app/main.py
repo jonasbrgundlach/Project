@@ -19,14 +19,14 @@ def main():
     arp_parser.add_argument("--victim-mac", required=False, help="MAC address of the victim's machine")
     arp_parser.add_argument("--gateway-ip", required=True, help="IP address of the gateway")
     arp_parser.add_argument("--gateway-mac", required=False, help="MAC address of the gateway")
-    arp_parser.add_argument("--attacker-mac", required=True, help="MAC address of the attacker's machine")
-    arp_parser.add_argument("--interface", default="eth0", help="Network interface to use for sending ARP packets")
+    arp_parser.add_argument("--attacker-mac", required=False, help="MAC address of the attacker's machine")
+    arp_parser.add_argument("--interface", default="enp0s3", help="Network interface to use for sending ARP packets")
 
     # Get MAC address arguments
     mac_parser = subparsers.add_parser("get_mac", help="Get the MAC address of a machine using its IP address")
     mac_parser.add_argument("--ip", required=True, help="IP address of the machine to find the MAC address for")
     mac_parser.add_argument("--network-range", required=False, help="The range of IP addresses to scan, e.g., '192.168.56.0-255'")
-    mac_parser.add_argument("--interface", default="eth0", help="Network interface to use if network range is not provided (default: 'eth0')")
+    mac_parser.add_argument("--interface", default="enp0s3", help="Network interface to use if network range is not provided (default: 'enp0s3')")
 
     args = parser.parse_args()
 
