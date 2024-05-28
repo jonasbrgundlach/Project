@@ -1,8 +1,13 @@
-# main.py
-
 import argparse
+import sys
+import os
+
+# Ensure the parent directory is in the system path
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+# Import attack modules and utility functions
 from attacks import arp_poison
-from utils import network_utils
+from utils.network_utils import get_mac_address
 
 def main():
     parser = argparse.ArgumentParser(description="Multi-attack Program")
@@ -11,31 +16,24 @@ def main():
     # ARP Poisoning attack arguments
     arp_parser = subparsers.add_parser("arp_poison", help="Perform ARP poisoning attack")
     arp_parser.add_argument("--victim-ip", required=True, help="IP address of the victim's machine")
-    arp_parser.add_argument("--victim-mac", required=True, help="MAC address of the victim's machine")
+    arp_parser.add_argument("--victim-mac", required=False, help="MAC address of the victim's machine")
     arp_parser.add_argument("--gateway-ip", required=True, help="IP address of the gateway")
-    arp_parser.add_argument("--gateway-mac", required=True, help="MAC address of the gateway")
+    arp_parser.add_argument("--gateway-mac", required=False, help="MAC address of the gateway")
     arp_parser.add_argument("--attacker-mac", required=True, help="MAC address of the attacker's machine")
     arp_parser.add_argument("--interface", default="eth0", help="Network interface to use for sending ARP packets")
 
-    # Another attack arguments
-    another_attack_parser = subparsers.add_parser("another_attack", help="Perform another type of attack")
-    another_attack_parser.add_argument("--example-param", required=True, help="Example parameter for another attack")
-    
     # Get MAC address arguments
     mac_parser = subparsers.add_parser("get_mac", help="Get the MAC address of a machine using its IP address")
     mac_parser.add_argument("--ip", required=True, help="IP address of the machine to find the MAC address for")
-    mac_parser.add_argument("--network-range", required=True, help="The range of IP addresses to scan, e.g., '192.168.56.0-255'")
+    mac_parser.add_argument("--network-range", required=False, help="The range of IP addresses to scan, e.g., '192.168.56.0-255'")
+    mac_parser.add_argument("--interface", default="eth0", help="Network interface to use if network range is not provided (default: 'eth0')")
 
-    # Parse the arguments
     args = parser.parse_args()
-    
-    # Check which attack to perform
+
     if args.attack == "arp_poison":
         arp_poison.run(args)
-    elif args.attack == "another_attack":
-        another_attack.run(args)
     elif args.attack == "get_mac":
-        mac_address = network_utils(args.ip, args.network_range)
+        mac_address = get_mac_address(args.ip, args.network_range, args.interface)
         if mac_address:
             print("The MAC address for IP {} is {}".format(args.ip, mac_address))
         else:
