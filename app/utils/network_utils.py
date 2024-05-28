@@ -97,7 +97,10 @@ def get_mac_address(ip, network_range=None, interface='enp0s3'):
         if ip_match:
             mac_match = mac_pattern.search(nmap_output, ip_match.end())
             if mac_match:
+                print("The MAC address for IP {} is {}".format(ip, mac_match.group(1)))
                 return mac_match.group(1)
+            else:
+                print("No MAC address found for IP {}".format(ip))
         
         return None
     except subprocess.CalledProcessError as e:

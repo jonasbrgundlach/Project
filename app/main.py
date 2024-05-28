@@ -33,11 +33,7 @@ def main():
     if args.attack == "arp_poison":
         arp_poison.run(args)
     elif args.attack == "get_mac":
-        mac_address = get_mac_address(args.ip, args.network_range, args.interface)
-        if mac_address:
-            print("The MAC address for IP {} is {}".format(args.ip, mac_address))
-        else:
-            print("No MAC address found for IP {}".format(args.ip))
+        get_mac_address(args.ip, args.network_range, args.interface)
     else:
         parser.print_help()
 

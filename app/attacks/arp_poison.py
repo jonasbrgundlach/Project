@@ -71,7 +71,6 @@ def run(args):
     if not args.victim_mac:
         print("No victim MAC address provided. Using get_mac_address utility to find it.")
         args.victim_mac = get_mac_address(args.victim_ip, interface=args.interface)
-        print("Victim MAC found: " + args.victim_mac)
         if not args.victim_mac:
             print("Failed to find MAC address for victim IP: {}".format(args.victim_ip))
             return
@@ -79,7 +78,6 @@ def run(args):
     if not args.gateway_mac:
         print("No gateway MAC address provided. Using get_mac_address utility to find it.")
         args.gateway_mac = get_mac_address(args.gateway_ip, interface=args.interface)
-        print("Gateway MAC found: " + args.gateway_mac)
         if not args.gateway_mac:
             print("Failed to find MAC address for gateway IP: {}".format(args.gateway_ip))
             return
@@ -87,7 +85,6 @@ def run(args):
     if not args.attacker_mac:
         print("No attacker MAC address provided. Using get_local_mac utility to find it.")
         args.attacker_mac = get_local_mac(interface=args.interface)
-        print("Attacker MAC found: " + args.attacker_mac)
         if not args.attacker_mac:
             print("Failed to find MAC address for attacker interface: {}".format(args.interface))
             return
