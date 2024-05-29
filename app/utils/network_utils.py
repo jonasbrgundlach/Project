@@ -35,6 +35,7 @@ def get_network_range(interface='enp0s3'):
     ip = get_local_ip(interface)
     netmask = get_netmask(interface)
     network_range = "{}/{}".format(ip, netmask_to_cidr(netmask))
+    print("Network range: {}".format(network_range))
     return network_range
 
 def get_netmask(interface='enp0s3'):
@@ -81,6 +82,7 @@ def get_mac_address(ip, network_range=None, interface='enp0s3'):
     """
     try:
         if network_range is None:
+            print("No network range provided. Determining network range automatically.")
             network_range = get_network_range(interface)
         
         # Run the nmap command
