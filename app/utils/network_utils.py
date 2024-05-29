@@ -126,13 +126,3 @@ def get_local_mac(interface='enp0s3'):
     except Exception as e:
         print("Error getting local MAC address: {}".format(e))
         return None
-
-if __name__ == "__main__":
-    # Example usage
-    target_ip = "192.168.56.101"
-    mac_address = get_mac_address(target_ip)
-    
-    if mac_address:
-        print("The MAC address for IP {} is {}".format(target_ip, mac_address))
-    else:
-        print("No MAC address found for IP {}".format(target_ip))
