@@ -22,7 +22,7 @@ def get_local_ip(interface='enp0s3'):
     )[20:24]
     return socket.inet_ntoa(ip)
 
-def get_network_range(interface='enp0s3'):
+def get_network_range(interface='enp0s3', verbose=True):
     """
     Get the network range of the specified network interface.
 
@@ -35,7 +35,8 @@ def get_network_range(interface='enp0s3'):
     ip = get_local_ip(interface)
     netmask = get_netmask(interface)
     network_range = "{}/{}".format(ip, netmask_to_cidr(netmask))
-    print("Network range: {}".format(network_range))
+    if verbose: 
+        print("Network range: {}".format(network_range))
     return network_range
 
 def get_netmask(interface='enp0s3'):
@@ -83,7 +84,7 @@ def get_mac_address(ip, network_range=None, interface='enp0s3'):
     try:
         if network_range is None:
             print("No network range provided. Determining network range automatically.")
-            network_range = get_network_range(interface)
+            network_range = get_network_range(interface, verbose=False)
         
         # Run the nmap command
         nmap_output = subprocess.check_output(['nmap', '-sn', network_range])
