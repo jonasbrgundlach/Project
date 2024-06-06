@@ -4,12 +4,12 @@ import socket
 import struct
 import fcntl
 
-def get_local_ip(interface='enp0s3'):
+def get_local_ip(interface='enp0s10'):
     """
     Get the local IP address of the specified network interface.
 
     Parameters:
-    interface (str): Network interface to get the IP address for (default is 'enp0s3').
+    interface (str): Network interface to get the IP address for (default is 'enp0s10').
 
     Returns:
     str: Local IP address.
@@ -22,12 +22,12 @@ def get_local_ip(interface='enp0s3'):
     )[20:24]
     return socket.inet_ntoa(ip)
 
-def get_network_range(interface='enp0s3', verbose=True):
+def get_network_range(interface='enp0s10', verbose=True):
     """
     Get the network range of the specified network interface.
 
     Parameters:
-    interface (str): Network interface to get the network range for (default is 'enp0s3').
+    interface (str): Network interface to get the network range for (default is 'enp0s10').
 
     Returns:
     str: Network range.
@@ -39,12 +39,12 @@ def get_network_range(interface='enp0s3', verbose=True):
         print("Network range: {}".format(network_range))
     return network_range
 
-def get_netmask(interface='enp0s3'):
+def get_netmask(interface='enp0s10'):
     """
     Get the subnet mask of the specified network interface.
 
     Parameters:
-    interface (str): Network interface to get the subnet mask for (default is 'enp0s3').
+    interface (str): Network interface to get the subnet mask for (default is 'enp0s10').
 
     Returns:
     str: Subnet mask.
@@ -69,14 +69,14 @@ def netmask_to_cidr(netmask):
     """
     return sum([bin(int(x)).count('1') for x in netmask.split('.')])
 
-def get_mac_address(ip, network_range=None, interface='enp0s3'):
+def get_mac_address(ip, network_range=None, interface='enp0s10'):
     """
     Function to get the MAC address of a machine using its IP address by scanning the network with nmap.
 
     Parameters:
     ip (str): IP address of the machine to find the MAC address for.
     network_range (str): The range of IP addresses to scan, e.g., "192.168.56.0-255". If not provided, it will be determined automatically.
-    interface (str): Network interface to use for determining the network range if not provided (default is 'enp0s3').
+    interface (str): Network interface to use for determining the network range if not provided (default is 'enp0s10').
 
     Returns:
     str: The MAC address of the machine with the specified IP address, or None if not found.
@@ -110,12 +110,12 @@ def get_mac_address(ip, network_range=None, interface='enp0s3'):
         print("Error running nmap: {}".format(e))
         return None
 
-def get_local_mac(interface='enp0s3'):
+def get_local_mac(interface='enp0s10'):
     """
     Get the MAC address of the local machine's network interface.
 
     Parameters:
-    interface (str): Network interface to get the MAC address for (default is 'enp0s3').
+    interface (str): Network interface to get the MAC address for (default is 'enp0s10').
 
     Returns:
     str: MAC address of the local machine's network interface.
