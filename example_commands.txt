@@ -9,3 +9,6 @@ sudo python2 main.py get_mac --ip <target_ip> (--network-range <network_range>)
 
 sudo python2 main.py get_mac --ip 192.168.56.101 --network-range 192.168.56.0-255
 sudo python2 main.py get_mac --ip 192.168.56.101
+
+# DNS Spoof
+sudo python2 main.py dns_spoof --ip <victim_ip> <sites.txt>

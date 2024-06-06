@@ -6,7 +6,7 @@ import os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 # Import attack modules and utility functions
-from attacks import arp_poison
+from attacks import arp_poison, dns_spoof
 from utils.network_utils import get_mac_address
 
 def add_arp_poison_parser(subparsers):
@@ -30,6 +30,16 @@ def add_get_mac_parser(subparsers):
     mac_parser.add_argument("--network-range", required=False, help="The range of IP addresses to scan, e.g., '192.168.56.0-255'")
     mac_parser.add_argument("--interface", default="enp0s10", help="Network interface to use if network range is not provided (default: 'enp0s10')")
 
+def add_dns_spoof_parser(subparsers):
+    """
+    Add parser for DNS spoofing attack.
+    """
+    dns_parser = subparsers.add_parser("dns_spoof", help="Perform DNS spoofing attack")
+    dns_parser.add_argument("--victim-ip", required=True, help="IP address of the victim's machine")
+    dns_parser.add_argument("--victim-mac", required=False, help="MAC address of the victim's machine")
+    dns_parser.add_argument("--attacker-mac", required=False, help="MAC address of the attacker's machine")
+    dns_parser.add_argument("--interface", default="enp0s10", help="Network interface to use for sending ARP packets")	
+
 def main():
     parser = argparse.ArgumentParser(description="Multi-attack Program")
     subparsers = parser.add_subparsers(dest="attack", help="Type of attack to perform")
@@ -37,6 +47,7 @@ def main():
     # Add subparsers
     add_arp_poison_parser(subparsers)
     add_get_mac_parser(subparsers)
+    add_dns_spoof_parser(subparsers)
 
     args = parser.parse_args()
 
@@ -44,6 +55,8 @@ def main():
         arp_poison.run(args)
     elif args.attack == "get_mac":
         get_mac_address(args.ip, args.network_range, args.interface)
+    elif args.attack == "dns_spoof":
+        dns_spoof.run(args)
     else:
         parser.print_help()
 
