@@ -3,7 +3,7 @@ import time
 import os
 
 from utils.network_utils import get_mac_address, get_local_mac
-from utils.ip_forwarding import enable_ip_forwarding, disable_ip_forwarding
+from utils.ip_forward import enable_ip_forwarding, disable_ip_forwarding
 
 def poison_arp(victim_ip, victim_mac, gateway_ip, gateway_mac, attacker_mac, interface):
     """

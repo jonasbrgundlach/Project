@@ -39,6 +39,8 @@ def add_dns_spoof_parser(subparsers):
     dns_parser.add_argument("--victim-mac", required=False, help="MAC address of the victim's machine")
     dns_parser.add_argument("--attacker-mac", required=False, help="MAC address of the attacker's machine")
     dns_parser.add_argument("--interface", default="enp0s10", help="Network interface to use for sending ARP packets")	
+    dns_parser.add_argument("--domain", required=True, help="Domain to spoof")
+    dns_parser.add_argument("--spoof-ip", required=True, help="IP address to spoof the domain with")
 
 def main():
     parser = argparse.ArgumentParser(description="Multi-attack Program")
