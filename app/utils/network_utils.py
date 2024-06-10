@@ -36,7 +36,7 @@ def get_network_range(interface='enp0s10', verbose=True):
     netmask = get_netmask(interface)
     network_range = "{}/{}".format(ip, netmask_to_cidr(netmask))
     if verbose: 
-        print("Network range: {}".format(network_range))
+        print("[Log] Network range: {}".format(network_range))
     return network_range
 
 def get_netmask(interface='enp0s10'):
@@ -83,7 +83,7 @@ def get_mac_address(ip, network_range=None, interface='enp0s10'):
     """
     try:
         if network_range is None:
-            print("No network range provided. Determining network range automatically.")
+            print("[Log] No network range provided. Determining network range automatically.")
             network_range = get_network_range(interface, verbose=False)
         
         # Run the nmap command
@@ -100,10 +100,10 @@ def get_mac_address(ip, network_range=None, interface='enp0s10'):
         if ip_match:
             mac_match = mac_pattern.search(nmap_output, ip_match.end())
             if mac_match:
-                print("The MAC address for IP {} is {}".format(ip, mac_match.group(1)))
+                print("[Log] The MAC address for IP {} is {}".format(ip, mac_match.group(1)))
                 return mac_match.group(1)
             else:
-                print("No MAC address found for IP {}".format(ip))
+                print("[Err] No MAC address found for IP {}".format(ip))
         
         return None
     except subprocess.CalledProcessError as e:
@@ -124,5 +124,5 @@ def get_local_mac(interface='enp0s10'):
         mac_address = open('/sys/class/net/{}/address'.format(interface)).read().strip()
         return mac_address
     except Exception as e:
-        print("Error getting local MAC address: {}".format(e))
+        print("[Err] Getting local MAC address: {}".format(e))
         return None

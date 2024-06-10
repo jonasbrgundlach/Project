@@ -6,9 +6,9 @@ def enable_ip_forwarding():
     try:
         with open('/proc/sys/net/ipv4/ip_forward', 'w') as f:
             f.write('1')
-        print("IP forwarding enabled.")
+        print("[+] IP forwarding enabled.")
     except Exception as e:
-        print("Failed to enable IP forwarding: %s" % str(e))
+        print("[Err] Failed to enable IP forwarding: %s" % str(e))
 
 def disable_ip_forwarding():
     """
@@ -17,6 +17,6 @@ def disable_ip_forwarding():
     try:
         with open('/proc/sys/net/ipv4/ip_forward', 'w') as f:
             f.write('0')
-        print("IP forwarding disabled.")
+        print("[-] IP forwarding disabled.")
     except Exception as e:
-        print("Failed to disable IP forwarding: %s" % str(e))
+        print("[Err] Failed to disable IP forwarding: %s" % str(e))

