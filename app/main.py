@@ -1,12 +1,12 @@
 import argparse
 import sys
 import os
-
+import time
 # Ensure the parent directory is in the system path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 # Import attack modules and utility functions
-from attacks import arp_poison
+from attacks.arp_poison import ArpPoisoner
 from utils.network_utils import get_mac_address
 from attacks import dns_spoof
 
@@ -55,7 +55,15 @@ def main():
     args = parser.parse_args()
 
     if args.attack == "arp_poison":
-        arp_poison.run(args)
+
+        poisoner = ArpPoisoner(args)
+        try:
+            poisoner.start()
+            while(poisoner.running):
+                time.sleep(1)
+        except KeyboardInterrupt:
+            poisoner.stop()
+            
     elif args.attack == "get_mac":
         get_mac_address(args.ip, args.network_range, args.interface)
     elif args.attack == "dns_spoof":

