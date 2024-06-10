@@ -9,6 +9,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from attacks.arp_poison import ArpPoisoner
 from utils.network_utils import get_mac_address
 from attacks import dns_spoof
+from attacks import ssl_strip
 
 def add_arp_poison_parser(subparsers):
     """
@@ -43,6 +44,13 @@ def add_dns_spoof_parser(subparsers):
     dns_parser.add_argument("--domain", required=True, help="Domain to spoof")
     dns_parser.add_argument("--spoof-ip", required=True, help="IP address to spoof the domain with")
 
+def add_ssl_strip_parser(subparsers):
+    ssl_parser = subparsers.add_parser("ssl_strip", help="Perform SSL-stripping attack")
+    ssl_parser.add_argument("--victim-ip", required=True, help="IP address of the victim's machine")
+    ssl_parser.add_argument("--victim-mac", required=False, help="MAC address of the victim's machine")
+    ssl_parser.add_argument("--attacker-mac", required=False, help="MAC address of the attacker's machine")
+    ssl_parser.add_argument("--interface", default="enp0s10", help="Network interface to use for sending ARP packets")
+
 def main():
     parser = argparse.ArgumentParser(description="Multi-attack Program")
     subparsers = parser.add_subparsers(dest="attack", help="Type of attack to perform")
@@ -51,6 +59,7 @@ def main():
     add_arp_poison_parser(subparsers)
     add_get_mac_parser(subparsers)
     add_dns_spoof_parser(subparsers)
+    add_ssl_strip_parser(subparsers)
 
     args = parser.parse_args()
 
@@ -68,6 +77,8 @@ def main():
         get_mac_address(args.ip, args.network_range, args.interface)
     elif args.attack == "dns_spoof":
         dns_spoof.run(args)
+    elif args.attack == "ssl_strip":
+        ssl_strip.run(args)
     else:
         parser.print_help()
 
