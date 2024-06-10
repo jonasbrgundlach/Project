@@ -6,8 +6,9 @@ import os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 # Import attack modules and utility functions
-from attacks import arp_poison, dns_spoof
+from attacks import arp_poison
 from utils.network_utils import get_mac_address
+from attacks import dns_spoof
 
 def add_arp_poison_parser(subparsers):
     """

