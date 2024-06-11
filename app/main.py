@@ -45,6 +45,9 @@ def add_dns_spoof_parser(subparsers):
     dns_parser.add_argument("--spoof-ip", required=True, help="IP address to spoof the domain with")
 
 def add_ssl_strip_parser(subparsers):
+    """
+    Add parser for SSL stripping attack.
+    """
     ssl_parser = subparsers.add_parser("ssl_strip", help="Perform SSL-stripping attack")
     ssl_parser.add_argument("--victim-ip", required=True, help="IP address of the victim's machine")
     ssl_parser.add_argument("--victim-mac", required=False, help="MAC address of the victim's machine")
