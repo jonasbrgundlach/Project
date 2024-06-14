@@ -11,4 +11,6 @@ sudo python2 main.py get_mac --ip 192.168.56.101 --network-range 192.168.56.0-25
 sudo python2 main.py get_mac --ip 192.168.56.101
 
 # DNS Spoof
-sudo python2 main.py dns_spoof --ip <victim_ip> <sites.txt>
+sudo python2 main.py dns_spoof --victim-ip <victim_ip> --domain <domain name to spoof> --spoof-ip <ip to spoof the domain name with>
+
+sudo python2 main.py dns_spoof --victim-ip 10.0.123.5 --domain example.com --spoof-ip 10.0.123.4
