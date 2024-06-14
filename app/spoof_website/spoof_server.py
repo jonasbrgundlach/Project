@@ -28,6 +28,8 @@ class CustomTCPServer(SocketServer.TCPServer):
 
     def __init__(self, server_address, RequestHandlerClass):
         SocketServer.TCPServer.__init__(self, server_address, RequestHandlerClass)
+        # Reroute port 80 tcp to 8000 to access the website
+        os.system("sudo iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 8000")
         self._is_running = True
 
     def serve_until_stopped(self):
@@ -36,6 +38,8 @@ class CustomTCPServer(SocketServer.TCPServer):
 
     def stop(self):
         self._is_running = False
+        # Reset the iptables
+        os.system("sudo iptables -F")
     
 def run_server():
     handler = MyHttpRequestHandler

