@@ -22,6 +22,7 @@ def add_arp_poison_parser(subparsers):
     arp_parser.add_argument("--gateway-mac", required=False, help="MAC address of the gateway")
     arp_parser.add_argument("--attacker-mac", required=False, help="MAC address of the attacker's machine")
     arp_parser.add_argument("--interface", default="enp0s10", help="Network interface to use for sending ARP packets")
+    arp_parser.add_argument("--ip-forward", action="store_true", help="Enable IP forwarding for MITM attack")
 
 def add_get_mac_parser(subparsers):
     """
@@ -67,7 +68,6 @@ def main():
     args = parser.parse_args()
 
     if args.attack == "arp_poison":
-
         poisoner = ArpPoisoner(args)
         try:
             poisoner.start()
@@ -75,7 +75,6 @@ def main():
                 time.sleep(1)
         except KeyboardInterrupt:
             poisoner.stop()
-            
     elif args.attack == "get_mac":
         get_mac_address(args.ip, args.network_range, args.interface)
     elif args.attack == "dns_spoof":

